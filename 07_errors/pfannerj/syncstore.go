@@ -7,6 +7,7 @@ import (
 
 // SyncStore is a sync.Map based in-memory implementation of PuppyStorer.
 type SyncStore struct {
+	sync.Mutex
 	sync.Map
 	currID uint32
 }
@@ -18,6 +19,8 @@ func NewSyncStore() *SyncStore {
 
 // CreatePuppy adds a new puppy to the sync store.
 func (s *SyncStore) CreatePuppy(puppy *Puppy) (uint32, error) {
+	s.Lock()
+	defer s.Unlock()
 	s.currID++
 	puppy.ID = s.currID
 	s.Store(puppy.ID, *puppy)
@@ -36,6 +39,8 @@ func (s *SyncStore) ReadPuppy(puppyID uint32) (*Puppy, error) {
 
 // UpdatePuppy modifies puppy data in the sync store, either creating a new one or overwriting an old one.
 func (s *SyncStore) UpdatePuppy(puppyID uint32, p *Puppy) (uint32, error) {
+	s.Lock()
+	defer s.Unlock()
 	if _, ok := s.Load(puppyID); !ok {
 		s.currID++
 		puppyID = s.currID
@@ -47,6 +52,8 @@ func (s *SyncStore) UpdatePuppy(puppyID uint32, p *Puppy) (uint32, error) {
 
 // DeletePuppy deletes the puppy with the given ID from the sync store.
 func (s *SyncStore) DeletePuppy(puppyID uint32) (bool, error) {
+	s.Lock()
+	defer s.Unlock()
 	if _, ok := s.Load(puppyID); ok {
 		s.Delete(puppyID)
 		return true, nil
