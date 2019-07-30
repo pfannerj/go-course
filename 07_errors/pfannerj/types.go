@@ -13,5 +13,5 @@ type Storer interface {
 	CreatePuppy(*Puppy) (uint32, error)
 	ReadPuppy(ID uint32) (*Puppy, error)
 	UpdatePuppy(ID uint32, puppy *Puppy) (uint32, error)
-	DeletePuppy(ID uint32) (bool, error)
+	DeletePuppy(ID uint32) error
 }

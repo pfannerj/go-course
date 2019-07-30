@@ -10,8 +10,8 @@ import (
 type storerImpl int
 
 const (
-	syncImpl storerImpl = iota // 0
-	mapImpl                    // 1
+	syncImpl storerImpl = iota
+	mapImpl
 )
 
 const firstPuppyID uint32 = 1
@@ -67,7 +67,7 @@ func (s *storerSuite) SetupTest() {
 	}
 }
 
-func (s *storerSuite) TestCreatePuppy_Successful() {
+func (s *storerSuite) TestCreate() {
 	// given
 	assert := tassert.New(s.T())
 	newPuppy := anotherPuppy()
@@ -84,7 +84,7 @@ func (s *storerSuite) TestCreatePuppy_Successful() {
 	}
 }
 
-func (s *storerSuite) TestReadPuppy_Successful() {
+func (s *storerSuite) TestRead() {
 	// given
 	assert := tassert.New(s.T())
 	expectedPuppy := firstPuppy()
@@ -99,7 +99,7 @@ func (s *storerSuite) TestReadPuppy_Successful() {
 	}
 }
 
-func (s *storerSuite) TestReadPuppy_IDDoesNotExist() {
+func (s *storerSuite) TestReadFail() {
 	// given
 	assert := tassert.New(s.T())
 
@@ -110,7 +110,7 @@ func (s *storerSuite) TestReadPuppy_IDDoesNotExist() {
 	assert.Error(err, "Should get an error when attempting to read a non-existent puppy")
 }
 
-func (s *storerSuite) TestUpdatePuppy_Successful() {
+func (s *storerSuite) TestUpdate() {
 	// given
 	assert := tassert.New(s.T())
 	updatePuppy := modifiedPuppy()
@@ -127,7 +127,7 @@ func (s *storerSuite) TestUpdatePuppy_Successful() {
 	}
 }
 
-func (s *storerSuite) TestUpdatePuppy_IDDoesNotExist() {
+func (s *storerSuite) TestUpdateFail() {
 	// given
 	assert := tassert.New(s.T())
 	updatePuppy := anotherPuppy()
@@ -144,26 +144,24 @@ func (s *storerSuite) TestUpdatePuppy_IDDoesNotExist() {
 	}
 }
 
-func (s *storerSuite) TestDeletePuppy_Successful() {
+func (s *storerSuite) TestDeleteExisting() {
 	// when
 	assert := tassert.New(s.T())
-	deleted, err := s.store.DeletePuppy(firstPuppyID)
+	err := s.store.DeletePuppy(firstPuppyID)
 
 	// then
 	assert.NoError(err, "Should not get an error deleting an existing puppy")
-	assert.True(deleted, "Delete should return true indicating a puppy was deleted")
 	_, err = s.store.ReadPuppy(firstPuppyID)
 	assert.Error(err, "Should not be able to read a deleted puppy")
 }
 
-func (s *storerSuite) TestDeletePuppy_IDDoesNotExist() {
+func (s *storerSuite) TestDeleteNotExisting() {
 	// when
 	assert := tassert.New(s.T())
-	deleted, err := s.store.DeletePuppy(99)
+	err := s.store.DeletePuppy(99)
 
 	// then
 	assert.NoError(err, "Should not get an error deleting a non-existent puppy")
-	assert.False(deleted, "Delete should return false indicating no puppy was deleted")
 }
 
 func TestStorer(t *testing.T) {

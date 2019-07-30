@@ -46,10 +46,9 @@ func (m *MapStore) UpdatePuppy(puppyID uint32, p *Puppy) (uint32, error) {
 }
 
 // DeletePuppy deletes the puppy with the given ID from the map store.
-func (m *MapStore) DeletePuppy(puppyID uint32) (bool, error) {
+func (m *MapStore) DeletePuppy(puppyID uint32) error {
 	if _, ok := m.puppyMap[puppyID]; ok {
 		delete(m.puppyMap, puppyID)
-		return true, nil
 	}
-	return false, nil
+	return nil
 }

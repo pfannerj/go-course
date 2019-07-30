@@ -51,12 +51,11 @@ func (s *SyncStore) UpdatePuppy(puppyID uint32, p *Puppy) (uint32, error) {
 }
 
 // DeletePuppy deletes the puppy with the given ID from the sync store.
-func (s *SyncStore) DeletePuppy(puppyID uint32) (bool, error) {
+func (s *SyncStore) DeletePuppy(puppyID uint32) error {
 	s.Lock()
 	defer s.Unlock()
 	if _, ok := s.Load(puppyID); ok {
 		s.Delete(puppyID)
-		return true, nil
 	}
-	return false, nil
+	return nil
 }
