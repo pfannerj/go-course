@@ -18,36 +18,40 @@ func NewSyncStore() *SyncStore {
 }
 
 // CreatePuppy adds a new puppy to the sync store.
-func (s *SyncStore) CreatePuppy(puppy *Puppy) (uint32, error) {
+func (s *SyncStore) CreatePuppy(puppy Puppy) (uint32, error) {
 	s.Lock()
 	defer s.Unlock()
 	s.currID++
 	puppy.ID = s.currID
-	s.Store(puppy.ID, *puppy)
+	if puppy.Value < 0 {
+		return puppy.ID, Errorf(ErrInvalidInput, "Create failed for puppy with id %d, value must not be < 0", puppy.ID)
+	}
+	s.Store(puppy.ID, puppy)
 	return puppy.ID, nil
 }
 
 // ReadPuppy gets a puppy from the sync store with the given ID.
-func (s *SyncStore) ReadPuppy(puppyID uint32) (*Puppy, error) {
+func (s *SyncStore) ReadPuppy(puppyID uint32) (Puppy, error) {
 	if puppy, ok := s.Load(puppyID); ok {
-		if puppyOut, ok := puppy.(Puppy); ok {
-			return &puppyOut, nil
-		}
+		puppyOut, _ := puppy.(Puppy)
+		return puppyOut, nil
 	}
-	return nil, fmt.Errorf("no puppy found with id %d", puppyID)
+	return Puppy{}, fmt.Errorf("no puppy found with id %d", puppyID)
 }
 
-// UpdatePuppy modifies puppy data in the sync store, either creating a new one or overwriting an old one.
-func (s *SyncStore) UpdatePuppy(puppyID uint32, p *Puppy) (uint32, error) {
+// UpdatePuppy modifies puppy data in the sync store for an existing puppy.
+func (s *SyncStore) UpdatePuppy(puppyID uint32, p Puppy) error {
 	s.Lock()
 	defer s.Unlock()
 	if _, ok := s.Load(puppyID); !ok {
-		s.currID++
-		puppyID = s.currID
+		return Errorf(ErrNotFound, "Update failed, no puppy found with id %d", puppyID)
+	}
+	if p.Value < 0 {
+		return Errorf(ErrInvalidInput, "Update failed for puppy with id %d, value must not be < 0", puppyID)
 	}
 	p.ID = puppyID //ensure the ID within p always matches the sync store key (puppyID)
-	s.Store(puppyID, *p)
-	return puppyID, nil
+	s.Store(puppyID, p)
+	return nil
 }
 
 // DeletePuppy deletes the puppy with the given ID from the sync store.
@@ -56,6 +60,7 @@ func (s *SyncStore) DeletePuppy(puppyID uint32) error {
 	defer s.Unlock()
 	if _, ok := s.Load(puppyID); ok {
 		s.Delete(puppyID)
+		return nil
 	}
-	return nil
+	return Errorf(ErrNotFound, "Delete failed, no puppy found with id %d", puppyID)
 }

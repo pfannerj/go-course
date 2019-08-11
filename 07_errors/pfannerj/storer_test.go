@@ -7,13 +7,6 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type storerImpl int
-
-const (
-	syncImpl storerImpl = iota
-	mapImpl
-)
-
 const firstPuppyID uint32 = 1
 
 var (
@@ -35,53 +28,87 @@ var (
 		return Puppy{
 			Breed:  "Labrador",
 			Colour: "Black",
-			Value:  999.99,
+			Value:  0,
+		}
+	}
+	invalidPuppy = func() Puppy {
+		return Puppy{
+			Breed:  "Poodle",
+			Colour: "White",
+			Value:  -23.67,
 		}
 	}
 )
 
 type storerSuite struct {
 	suite.Suite
-	store Storer
-	impl  storerImpl
+	thisStore func() Storer
+	store     Storer
 }
 
 func (s *storerSuite) SetupTest() {
-	var err error
-	switch s.impl {
-	case syncImpl:
-		// create a new syncstore and add the first puppy
-		s.store = NewSyncStore()
-		puppySyncImpl := firstPuppy()
-		_, err = s.store.CreatePuppy(&puppySyncImpl)
-	case mapImpl:
-		// create a new mapstore and add the first puppy
-		s.store = NewMapStore()
-		puppyMapImpl := firstPuppy()
-		_, err = s.store.CreatePuppy(&puppyMapImpl)
-	default:
-		panic("Unrecognised storer implementation")
-	}
+	// create test store and add the first puppy
+	s.store = s.thisStore()
+	puppy := firstPuppy()
+	_, err := s.store.CreatePuppy(puppy)
 	if err != nil {
 		panic("Failed to setup puppy test")
 	}
 }
 
+func TestStorer(t *testing.T) {
+
+	suite.Run(t, &storerSuite{
+		thisStore: func() Storer { return &SyncStore{} },
+	})
+	suite.Run(t, &storerSuite{
+		thisStore: func() Storer { return &MapStore{puppyMap: PuppyMap{}} },
+	})
+	//suite.Run(t, &storerSuite{thisStore: NewMapStore})
+}
+
 func (s *storerSuite) TestCreate() {
 	// given
 	assert := tassert.New(s.T())
-	newPuppy := anotherPuppy()
+	newPuppy := firstPuppy()
 
 	// when
-	createdPuppyID, err := s.store.CreatePuppy(&newPuppy)
+	createdPuppyID, err := s.store.CreatePuppy(newPuppy)
 	newPuppy.ID = createdPuppyID
 
 	// then
 	assert.NoError(err, "Should not get an error creating a puppy")
 	foundPuppy, err := s.store.ReadPuppy(createdPuppyID)
-	if assert.NoError(err, "Should be able to read an newly created puppy") {
-		assert.Equal(&newPuppy, foundPuppy, "Created puppy should be identical to the one passed to create")
-	}
+	assert.NoError(err, "Should be able to read an newly created puppy")
+	assert.Equal(newPuppy, foundPuppy, "Created puppy should be identical to the one passed to create")
+}
+
+func (s *storerSuite) TestCreateZero() {
+	// given
+	assert := tassert.New(s.T())
+	newPuppy := anotherPuppy()
+
+	// when
+	createdPuppyID, err := s.store.CreatePuppy(newPuppy)
+	newPuppy.ID = createdPuppyID
+
+	// then
+	assert.NoError(err, "Should not get an error creating a puppy with value = 0")
+	foundPuppy, err := s.store.ReadPuppy(createdPuppyID)
+	assert.NoError(err, "Should be able to read an newly created puppy")
+	assert.Equal(newPuppy, foundPuppy, "Created puppy should be identical to the one passed to create")
+}
+
+func (s *storerSuite) TestCreateFailInvalidInput() {
+	// given
+	assert := tassert.New(s.T())
+	newPuppy := invalidPuppy()
+
+	// when
+	_, err := s.store.CreatePuppy(newPuppy)
+
+	// then
+	assert.Error(err, "Should get an error creating a puppy with value < 0")
 }
 
 func (s *storerSuite) TestRead() {
@@ -91,12 +118,11 @@ func (s *storerSuite) TestRead() {
 	expectedPuppy.ID = firstPuppyID
 
 	// when
-	actualPuppy, err := s.store.ReadPuppy(firstPuppyID)
+	foundPuppy, err := s.store.ReadPuppy(firstPuppyID)
 
 	// then
-	if assert.NoError(err, "Should not get an error reading puppy from store") {
-		assert.Equal(&expectedPuppy, actualPuppy, "Store should return a puppy identical to firstPuppy")
-	}
+	assert.NoError(err, "Should not get an error reading puppy from store")
+	assert.Equal(expectedPuppy, foundPuppy, "Store should return a puppy identical to firstPuppy")
 }
 
 func (s *storerSuite) TestReadFail() {
@@ -114,34 +140,52 @@ func (s *storerSuite) TestUpdate() {
 	// given
 	assert := tassert.New(s.T())
 	updatePuppy := modifiedPuppy()
+	updatePuppy.ID = firstPuppyID
 
 	// when
-	puppyID, err := s.store.UpdatePuppy(firstPuppyID, &updatePuppy)
+	err := s.store.UpdatePuppy(firstPuppyID, updatePuppy)
 
 	// then
-	if assert.NoError(err, "Should not get an error updating a puppy") {
-		foundPuppy, err := s.store.ReadPuppy(puppyID)
-		if assert.NoError(err, "Should not get an error reading the updated puppy") {
-			assert.Equal(&updatePuppy, foundPuppy, "Found puppy should be equal to updated puppy")
-		}
-	}
+	assert.NoError(err, "Should not get an error updating a puppy")
+	foundPuppy, err := s.store.ReadPuppy(updatePuppy.ID)
+	assert.NoError(err, "Should not get an error reading the updated puppy")
+	assert.Equal(updatePuppy, foundPuppy, "Found puppy should be equal to updated puppy")
 }
 
-func (s *storerSuite) TestUpdateFail() {
+func (s *storerSuite) TestUpdateZero() {
 	// given
 	assert := tassert.New(s.T())
 	updatePuppy := anotherPuppy()
 
 	// when
-	puppyID, err := s.store.UpdatePuppy(99, &updatePuppy)
+	err := s.store.UpdatePuppy(1, updatePuppy)
 
 	// then
-	if assert.NoError(err, "Should not get an error updating a puppy") {
-		foundPuppy, err := s.store.ReadPuppy(puppyID)
-		if assert.NoError(err, "Should not get an error reading the updated puppy") {
-			assert.Equal(&updatePuppy, foundPuppy, "Found puppy should be equal to updated puppy")
-		}
-	}
+	assert.NoError(err, "Should not get an error updating a puppy with value = 0")
+}
+
+func (s *storerSuite) TestUpdateFailNotFound() {
+	// given
+	assert := tassert.New(s.T())
+	updatePuppy := anotherPuppy()
+
+	// when
+	err := s.store.UpdatePuppy(99, updatePuppy)
+
+	// then
+	assert.Error(err, "Should get an error updating a puppy")
+}
+
+func (s *storerSuite) TestUpdateFailInvalidInput() {
+	// given
+	assert := tassert.New(s.T())
+	updatePuppy := invalidPuppy()
+
+	// when
+	err := s.store.UpdatePuppy(1, updatePuppy)
+
+	// then
+	assert.Error(err, "Should get an error updating a puppy with value < 0")
 }
 
 func (s *storerSuite) TestDeleteExisting() {
@@ -161,18 +205,5 @@ func (s *storerSuite) TestDeleteNotExisting() {
 	err := s.store.DeletePuppy(99)
 
 	// then
-	assert.NoError(err, "Should not get an error deleting a non-existent puppy")
-}
-
-func TestStorer(t *testing.T) {
-	syncSuite := storerSuite{
-		store: NewSyncStore(),
-		impl:  syncImpl,
-	}
-	suite.Run(t, &syncSuite)
-	mapSuite := storerSuite{
-		store: NewMapStore(),
-		impl:  mapImpl,
-	}
-	suite.Run(t, &mapSuite)
+	assert.Error(err, "Should get an error deleting a non-existent puppy")
 }
