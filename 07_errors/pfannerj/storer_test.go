@@ -42,13 +42,13 @@ var (
 
 type storerSuite struct {
 	suite.Suite
-	thisStore func() Storer
-	store     Storer
+	newStore func() Storer
+	store    Storer
 }
 
 func (s *storerSuite) SetupTest() {
 	// create test store and add the first puppy
-	s.store = s.thisStore()
+	s.store = s.newStore()
 	puppy := firstPuppy()
 	_, err := s.store.CreatePuppy(puppy)
 	if err != nil {
@@ -57,14 +57,13 @@ func (s *storerSuite) SetupTest() {
 }
 
 func TestStorer(t *testing.T) {
-
 	suite.Run(t, &storerSuite{
-		thisStore: func() Storer { return &SyncStore{} },
+		newStore: func() Storer { return &SyncStore{} },
 	})
 	suite.Run(t, &storerSuite{
-		thisStore: func() Storer { return &MapStore{puppyMap: PuppyMap{}} },
+		newStore: func() Storer { return &MapStore{puppyMap: PuppyMap{}} },
 	})
-	//suite.Run(t, &storerSuite{thisStore: NewMapStore})
+	//suite.Run(t, &storerSuite{newStore: NewMapStore})
 }
 
 func (s *storerSuite) TestCreate() {
