@@ -19,6 +19,10 @@ Sync Puppy Created with ID: 1
 Sync Puppy read: {1 Labrador Brown 999.99}
 Sync Puppy updated: 1
 Sync Puppy deleted! Error returned was: <nil>
+LevelDB Puppy Created with ID: 1
+LevelDB Puppy read: {1 Labrador Brown 999.99}
+LevelDB Puppy updated: 1
+LevelDB Puppy deleted! Error returned was: <nil>
 `
 	actual := buf.String()
 	assert.Equal(t, expected, actual, "Unexpected output from main()")

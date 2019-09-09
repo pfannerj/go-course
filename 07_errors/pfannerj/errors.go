@@ -10,6 +10,8 @@ const (
 	ErrNotFound int = iota
 	// ErrInvalidInput is used when the incoming request is invalid
 	ErrInvalidInput
+	// ErrInternalDataError is used for issues retrieving data from the DB
+	ErrInternalDataError
 )
 
 // Error defines an error that separates internal and external error messages

@@ -28,4 +28,13 @@ func main() {
 	fmt.Fprintf(mainout, "Sync Puppy updated: %d\n", syncPuppyID)
 	syncErr := syncStore.DeletePuppy(syncPuppyID)
 	fmt.Fprintf(mainout, "Sync Puppy deleted! Error returned was: %v\n", syncErr)
+	ldbStore := NewLevelDBStore()
+	ldbPuppyID, _ := ldbStore.CreatePuppy(puppy)
+	fmt.Fprintf(mainout, "LevelDB Puppy Created with ID: %d\n", ldbPuppyID)
+	ldbPuppy, _ := ldbStore.ReadPuppy(ldbPuppyID)
+	fmt.Fprintf(mainout, "LevelDB Puppy read: %v\n", ldbPuppy)
+	_ = ldbStore.UpdatePuppy(ldbPuppyID, ldbPuppy)
+	fmt.Fprintf(mainout, "LevelDB Puppy updated: %d\n", ldbPuppyID)
+	ldbErr := ldbStore.DeletePuppy(ldbPuppyID)
+	fmt.Fprintf(mainout, "LevelDB Puppy deleted! Error returned was: %v\n", ldbErr)
 }

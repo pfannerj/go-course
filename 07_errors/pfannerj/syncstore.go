@@ -40,17 +40,17 @@ func (s *SyncStore) ReadPuppy(puppyID uint32) (Puppy, error) {
 }
 
 // UpdatePuppy modifies puppy data in the sync store for an existing puppy.
-func (s *SyncStore) UpdatePuppy(puppyID uint32, p Puppy) error {
+func (s *SyncStore) UpdatePuppy(puppyID uint32, puppy Puppy) error {
 	s.Lock()
 	defer s.Unlock()
 	if _, ok := s.Load(puppyID); !ok {
 		return Errorf(ErrNotFound, "Update failed, no puppy found with id %d", puppyID)
 	}
-	if p.Value < 0 {
+	if puppy.Value < 0 {
 		return Errorf(ErrInvalidInput, "Update failed for puppy with id %d, value must not be < 0", puppyID)
 	}
-	p.ID = puppyID //ensure the ID within p always matches the sync store key (puppyID)
-	s.Store(puppyID, p)
+	puppy.ID = puppyID //ensure the ID within p always matches the sync store key (puppyID)
+	s.Store(puppyID, puppy)
 	return nil
 }
 
