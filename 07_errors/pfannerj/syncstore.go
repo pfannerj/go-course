@@ -49,7 +49,7 @@ func (s *SyncStore) UpdatePuppy(puppyID uint32, puppy Puppy) error {
 	if puppy.Value < 0 {
 		return Errorf(ErrInvalidInput, "Update failed for puppy with id %d, value must not be < 0", puppyID)
 	}
-	puppy.ID = puppyID //ensure the ID within p always matches the sync store key (puppyID)
+	puppy.ID = puppyID //ensure the ID within puppy always matches the sync store key (puppyID)
 	s.Store(puppyID, puppy)
 	return nil
 }

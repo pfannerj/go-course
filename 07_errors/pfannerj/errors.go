@@ -30,7 +30,11 @@ func (e *Error) Error() string {
 
 // Errorf creates a new Error with formatting
 func Errorf(code int, format string, args ...interface{}) *Error {
-	return ErrorEf(code, nil, format, args...)
+	var errorCause error
+	if args != nil {
+		errorCause = fmt.Errorf("no puppy found with id %d", args)
+	}
+	return ErrorEf(code, errorCause, format, args...)
 }
 
 // ErrorEf creates a new Error with causing error and formatting

@@ -1,12 +1,9 @@
 package main
 
 import (
-	"encoding/json"
 	"os"
-	"strconv"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	tassert "github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/syndtr/goleveldb/leveldb"
@@ -52,17 +49,9 @@ type storerSuite struct {
 }
 
 func (s *storerSuite) SetupSuite() {
-	// Remove old db if exists
-	println("Removing old db", levelDBPath)
+	// Remove old leveldb if it already exists
 	os.RemoveAll(levelDBPath)
 }
-
-// func (s *storerSuite) TearDownTest() {
-// 	if ldbs, ok := s.store.(*LevelDBStore); ok {
-// 		println("Closing old db", ldbs)
-// 		ldbs.ldb.Close()
-// 	}
-// }
 
 func (s *storerSuite) SetupTest() {
 	// create test store and add the first puppy
@@ -83,7 +72,9 @@ func TestStorer(t *testing.T) {
 	})
 	//suite.Run(t, &storerSuite{newStore: NewMapStore})
 	db, err := leveldb.OpenFile(levelDBPath, nil)
-	dbErrorPanic(err)
+	if err != nil {
+		panic(err)
+	}
 	suite.Run(t, &storerSuite{
 		newStore: func() Storer { return &LevelDBStore{currID: 0, ldb: db} },
 	})
@@ -228,22 +219,4 @@ func (s *storerSuite) TestDeleteNotExisting() {
 
 	// then
 	assert.Error(err, "Should get an error deleting a non-existent puppy")
-}
-
-func TestBrokenDataInLevelDB(t *testing.T) {
-	// Prepare corrupted data to cause internal error
-	func() {
-		assert := tassert.New(t)
-		db, _ := leveldb.OpenFile(levelDBPath, nil)
-		defer db.Close()
-		puppyByte, err := json.Marshal("this is not a valid puppy")
-		assert.NoError(err, "no error expected marshaling string")
-		byteID := []byte(strconv.Itoa(999))
-		err = db.Put(byteID, puppyByte, nil)
-		assert.NoError(err, "no error expected preparing corrupted data in db")
-	}()
-	s := NewLevelDBStore()
-	defer s.ldb.Close()
-	_, err := s.ReadPuppy(999)
-	assert.Error(t, err)
 }
