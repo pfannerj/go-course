@@ -22,6 +22,7 @@ type Error struct {
 }
 
 func (e *Error) Error() string {
+	println("** line cause ***", e.Cause)
 	if e.Cause == nil {
 		return e.Message
 	}
@@ -30,6 +31,7 @@ func (e *Error) Error() string {
 
 // Errorf creates a new Error with formatting
 func Errorf(code int, format string, args ...interface{}) *Error {
+	println("** args ***", args)
 	var errorCause error
 	if args != nil {
 		errorCause = fmt.Errorf("no puppy found with id %d", args)
@@ -39,6 +41,7 @@ func Errorf(code int, format string, args ...interface{}) *Error {
 
 // ErrorEf creates a new Error with causing error and formatting
 func ErrorEf(code int, cause error, format string, args ...interface{}) *Error {
+	println("** cause ***", cause)
 	return &Error{
 		Message: fmt.Sprintf(format, args...),
 		Code:    code,

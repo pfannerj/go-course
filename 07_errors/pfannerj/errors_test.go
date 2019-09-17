@@ -11,7 +11,9 @@ func TestErrors(t *testing.T) {
 	err := Errorf(ErrNotFound, "test error message")
 	assert.Equal(ErrNotFound, err.Code)
 	assert.Equal("test error message", err.Message)
-	errFull := Errorf(ErrNotFound, "test error message %v", err)
-	assert.NotEqual(err, errFull.Cause)
-	assert.NotEqual("test error message", errFull.Error())
+	errWithCause := Errorf(ErrInvalidInput, "test error message with cause %v", err)
+	println("***Error with cause***", errWithCause.Code)
+	assert.Equal(ErrInvalidInput, errWithCause.Code)
+	assert.Equal(errWithCause.Message, "test error message with cause test error message")
+	assert.NotEqual(errWithCause.Cause, err)
 }

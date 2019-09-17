@@ -27,3 +27,22 @@ func TestInternalDataError(t *testing.T) {
 	_, err := l.ReadPuppy(999)
 	assert.Error(t, err, "Should get an error reading the corrupt puppy")
 }
+
+func TestCheckForDBErrorPanic(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("checkForDBError did panic")
+		}
+	}()
+	err := Errorf(ErrInternalDataError, "test data error")
+	checkForDBError(err)
+}
+
+func TestCheckForDBErrorDoesNotPanic(t *testing.T) {
+	defer func() {
+		if r := recover(); r != nil {
+			t.Errorf("checkForDBError did not panic")
+		}
+	}()
+	checkForDBError(nil)
+}

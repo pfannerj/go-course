@@ -20,9 +20,7 @@ type LevelDBStore struct {
 // NewLevelDBStore creates a new leveldb store.
 func NewLevelDBStore() *LevelDBStore {
 	db, err := leveldb.OpenFile(levelDBPath, nil)
-	if err != nil {
-		panic(err)
-	}
+	checkForDBError(err)
 	return &LevelDBStore{currID: 0, ldb: db}
 }
 
@@ -70,9 +68,8 @@ func (l *LevelDBStore) DeletePuppy(puppyID uint32) error {
 		return Errorf(ErrNotFound, "Delete failed, no puppy found with id %d", puppyID)
 	}
 	byteID := []byte(strconv.Itoa(int(puppyID)))
-	if err := l.ldb.Delete(byteID, nil); err != nil {
-		panic(err)
-	}
+	err := l.ldb.Delete(byteID, nil)
+	checkForDBError(err)
 	return nil
 }
 
@@ -83,8 +80,14 @@ func (l *LevelDBStore) writePuppy(puppyID uint32, puppy Puppy) (uint32, error) {
 	}
 	puppyByte, _ := json.Marshal(puppy)
 	byteID := []byte(strconv.Itoa(int(puppyID)))
-	if err := l.ldb.Put(byteID, puppyByte, nil); err != nil {
+	err := l.ldb.Put(byteID, puppyByte, nil)
+	checkForDBError(err)
+	return puppyID, nil
+}
+
+// checkForDBError causes panic if error is not nil
+func checkForDBError(err error) {
+	if err != nil {
 		panic(err)
 	}
-	return puppyID, nil
 }
