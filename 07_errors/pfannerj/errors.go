@@ -22,26 +22,24 @@ type Error struct {
 }
 
 func (e *Error) Error() string {
-	println("** line cause ***", e.Cause)
-	if e.Cause == nil {
-		return e.Message
+	//fmt.Println("** how many times here ***", e.Message)
+	if e.Cause != nil {
+		fmt.Println("** got here e.Cause not nil ***", e.Cause)
 	}
 	return fmt.Sprintf("%v\n%v", e.Message, e.Cause)
 }
 
 // Errorf creates a new Error with formatting
 func Errorf(code int, format string, args ...interface{}) *Error {
-	println("** args ***", args)
 	var errorCause error
 	if args != nil {
-		errorCause = fmt.Errorf("no puppy found with id %d", args)
+		errorCause = fmt.Errorf(" - error cause: %d", args)
 	}
 	return ErrorEf(code, errorCause, format, args...)
 }
 
 // ErrorEf creates a new Error with causing error and formatting
 func ErrorEf(code int, cause error, format string, args ...interface{}) *Error {
-	println("** cause ***", cause)
 	return &Error{
 		Message: fmt.Sprintf(format, args...),
 		Code:    code,
